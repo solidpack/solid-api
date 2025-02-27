@@ -4,7 +4,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     alias(libs.plugins.shadow)
     alias(libs.plugins.kotlin)
-    alias(libs.plugins.sonatypeCentralPortalPublisher)
+    alias(libs.plugins.sonatype.central.portal.publisher)
     `maven-publish`
 }
 
@@ -18,11 +18,10 @@ repositories {
 }
 
 dependencies {
-    testImplementation(rootProject.libs.kotlinTest)
-    implementation(rootProject.libs.kotlinJvm)
-    compileOnly(libs.paper)
-    api(libs.solidMaterial)
-    api(libs.bundles.creative)
+    testImplementation(rootProject.libs.kotlin.test)
+    implementation(rootProject.libs.kotlin.jvm)
+    implementation(rootProject.libs.bundles.configurate)
+    api(rootProject.libs.adventure)
 }
 
 kotlin {
@@ -40,9 +39,6 @@ tasks.named("shadowJar", ShadowJar::class) {
 
 tasks.test {
     useJUnitPlatform()
-    dependencies {
-        implementation(libs.paper)
-    }
 }
 
 publishing {

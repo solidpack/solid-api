@@ -1,8 +1,7 @@
-package io.github.solid.resourcepack.api.predicate
+package io.github.solid.resourcepack.api.link
 
+import io.github.solid.resourcepack.api.link.legacy.ModelOverride
 import net.kyori.adventure.key.Key
-import team.unnamed.creative.model.ItemOverride
-import team.unnamed.creative.model.ItemPredicate
 
 enum class PredicateIncrementorType(val predicates: Map<String, PredicateArgument<*>>) {
     NOTE_BLOCK(
@@ -118,30 +117,32 @@ class PredicateGenerator(private val incrementor: PredicateIncrementor) {
         incrementor.setValue(1)
     }
 
-    fun generate(predicates: List<ItemOverride>?, items: List<Key>): List<ItemOverride> {
+    fun generate(predicates: List<ModelOverride>?, items: List<Key>): List<ModelOverride> {
         val predicateMaps =
-            predicates?.map { predicate -> predicate.predicate().associate { it.name() to it.value() } } ?: listOf()
+            predicates?.map { predicate -> predicate.predicate.toList().associate { it.first to it.second } }
+                ?: listOf()
         val realPredicates = predicates?.toMutableList() ?: mutableListOf()
         val iterator = items.iterator()
         while (iterator.hasNext()) {
             val item = iterator.next()
-            if(predicates?.any { it.model() == item } == true) continue
+            if (predicates?.any { it.model == item } == true) continue
             var predicate = incrementor.increment()
             while (predicateMaps.contentEquals(predicate)) {
                 predicate = incrementor.increment()
             }
             realPredicates.add(
-                ItemOverride.of(
-                    item,
-                    predicate.map { ItemPredicate.custom(it.key, it.value) })
+                ModelOverride(
+                    predicate,
+                    item
+                )
             )
         }
         return realPredicates
     }
 
     private fun List<Map<String, Any>>.contentEquals(other: Map<String, Any>): Boolean {
-        return this.any first@ {
-            val returned = it.keys.all second@ { key ->
+        return this.any first@{
+            val returned = it.keys.all second@{ key ->
                 return@second other[key].toString() == it[key].toString()
             }
             return@first returned

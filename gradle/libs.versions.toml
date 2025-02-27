@@ -2,28 +2,25 @@
 kotlin = "1.9.20"
 kotlinCoroutines = "1.4.2"
 shadow = "8.1.1"
-paper = "1.21-R0.1-SNAPSHOT"
-creative = "1.7.2"
 sonatypeCentralPortalPublisher = "1.2.3"
-solidMaterial = "1.21-1.1.1"
+configurate = "4.2.0"
+adventure = "4.19.0"
 
 [libraries]
-kotlinJvm = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8", version.ref = "kotlin" }
-kotlinTest = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
-kotlinCoroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinCoroutines" }
-paper = { module = "io.papermc.paper:paper-api", version.ref = "paper" }
-
-creativeApi = { module = "team.unnamed:creative-api", version.ref = "creative" }
-creativeSerializer = { module = "team.unnamed:creative-serializer-minecraft", version.ref = "creative" }
-solidMaterial = { module = "io.github.solid-resourcepack:solid-material-api", version.ref = "solidMaterial" }
+kotlin-jvm = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8", version.ref = "kotlin" }
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+kotlin-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinCoroutines" }
+configurate = { module = "org.spongepowered:configurate-gson", version.ref = "configurate" }
+configurate-extra-kotlin = { module = "org.spongepowered:configurate-extra-kotlin", version.ref = "configurate" }
+adventure = { module = "net.kyori:adventure-api", version.ref = "adventure" }
 
 [bundles]
-creative = [
-    "creativeApi",
-    "creativeSerializer"
+configurate = [
+    "configurate",
+    "configurate-extra-kotlin"
 ]
 
 [plugins]
 kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 shadow = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }
-sonatypeCentralPortalPublisher = { id = "net.thebugmc.gradle.sonatype-central-portal-publisher", version.ref = "sonatypeCentralPortalPublisher" }
+sonatype-central-portal-publisher = { id = "net.thebugmc.gradle.sonatype-central-portal-publisher", version.ref = "sonatypeCentralPortalPublisher" }
