@@ -1,6 +1,5 @@
 # solid-api ![Maven Central Version](https://img.shields.io/maven-central/v/io.github.solid-resourcepack/solid-api?style=flat) ![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/solid-resourcepack/solid-api)
-A library built on top of [creative](https://github.com/unnamed/creative) to make resource pack generation simpler.
-Visit the [Wiki]() to learn more
+A (currently) read only API for minecraft resource packs.
 
 > Documentation is still work in progress
 
