@@ -2,8 +2,8 @@
 .gradle
 **/build/
 !src/**/build/
-
 **/test/kotlin/pack
+**/gradle.properties
 
 # Ignore Gradle GUI config
 gradle-app.setting
