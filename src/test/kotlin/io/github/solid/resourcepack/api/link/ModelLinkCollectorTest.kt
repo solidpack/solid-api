@@ -12,6 +12,19 @@ class ModelLinkCollectorTest {
         val path = Path.of("src", "test", "kotlin", "pack")
         println(path.toAbsolutePath().toString())
         val collector = ModelLinkCollector(path)
-        assert(collector.collect().isNotEmpty())
+        val result = collector.collect()
+        printResult(result)
+        assert(result.isNotEmpty())
+    }
+
+    private fun printResult(result: List<ModelLink>) {
+        result.forEach {
+            println("Key: " + it.key)
+            println("Type: " + it.modelType)
+            println("Item Model: " + it.itemModel)
+            println("Parent: " + it.parent)
+            println("Predicates: " + it.predicates)
+            println("---")
+        }
     }
 }
