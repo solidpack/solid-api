@@ -9,6 +9,7 @@ interface ModelLinkHolder {
 data class ModelLink(
     val key: Key,
     val parent: Key? = null,
+    val itemModel: Key? = null,
     val predicates: Map<String, Any>? = null,
     val modelType: ModelType = ModelType.ITEM,
 )

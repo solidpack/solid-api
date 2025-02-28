@@ -13,9 +13,16 @@ data class ModernResourcePackLink(
     val model: ModernResourcePackModel? = null
 ) : ModelLinkHolder {
     override fun collect(): List<ModelLink> {
-        if (model?.model == null) { return listOf() }
+        if (model?.model == null) {
+            return listOf()
+        }
         if (model.type != Key.key("minecraft", "model")) return listOf()
-        return listOf(ModelLink(model.model))
+        return listOf(
+            ModelLink(
+                model.model,
+                itemModel = Key.key(model.model.namespace(), model.model.value().replaceFirst("item/", ""))
+            )
+        )
     }
 }
 

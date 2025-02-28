@@ -113,7 +113,9 @@ class ModelLinkCollector(private val packPath: Path) : ModelLinkHolder {
                 val parsed = readModel<ModernResourcePackLink>(definition)
                 parsed?.collect()?.let {
                     result.addAll(it.filter { m ->
-                        basePaths.any { path -> packPath.resolve(path).resolve(toModelPath(m.key)).exists() }
+                        basePaths.any { basePath ->
+                            packPath.resolve(basePath).resolve(toModelPath(m.key)).exists() && m.key.namespace() == path.last().toString()
+                        }
                     })
                 }
             } catch (e: Exception) {
@@ -135,15 +137,23 @@ class ModelLinkCollector(private val packPath: Path) : ModelLinkHolder {
     }
 
 
-    private fun <T> MutableList<T>.combine(other: List<T>, check: (first: T, second: T) -> Boolean): List<T> {
+    private fun MutableList<ModelLink>.combine(other: List<ModelLink>, check: (first: ModelLink, second: ModelLink) -> Boolean): List<ModelLink> {
         other.forEach { element ->
             val found = this.find { check(element, it) }?.let { this.indexOf(it) }
             if (found == null) {
                 this.add(element)
                 return@forEach
             }
+            val toReplace = this.elementAt(found)
+            val result = ModelLink(
+                key = toReplace.key,
+                parent = element.parent ?: toReplace.parent,
+                itemModel = element.itemModel ?: toReplace.itemModel,
+                modelType = toReplace.modelType,
+                predicates = element.predicates ?: toReplace.predicates,
+            )
             this.removeAt(found)
-            this.add(found, element)
+            this.add(found, result)
         }
         return this
     }
