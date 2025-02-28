@@ -10,15 +10,17 @@ import org.spongepowered.configurate.objectmapping.ConfigSerializable
  */
 @ConfigSerializable
 data class ModernResourcePackLink(
-    val model: ModernResourcePackModel
+    val model: ModernResourcePackModel? = null
 ) : ModelLinkHolder {
     override fun collect(): List<ModelLink> {
+        if (model?.model == null) { return listOf() }
+        if (model.type != Key.key("minecraft", "model")) return listOf()
         return listOf(ModelLink(model.model))
     }
 }
 
 @ConfigSerializable
 data class ModernResourcePackModel(
-    val type: Key,
-    val model: Key,
+    val type: Key? = null,
+    val model: Key? = null,
 )

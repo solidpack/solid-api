@@ -2,8 +2,9 @@ package io.github.solid.resourcepack.api.link
 
 import io.github.solid.resourcepack.api.link.legacy.LegacyResourcePackItemLink
 import io.github.solid.resourcepack.api.link.modern.ModernResourcePackLink
-import io.github.solid.resourcepack.api.util.GenericEnumSerializer
-import io.github.solid.resourcepack.api.util.KeySerializer
+import io.github.solid.resourcepack.api.meta.PackMeta
+import io.github.solid.resourcepack.api.util.*
+import io.leangen.geantyref.TypeToken
 import net.kyori.adventure.key.Key
 import org.spongepowered.configurate.gson.GsonConfigurationLoader
 import org.spongepowered.configurate.kotlin.extensions.get
@@ -11,15 +12,22 @@ import org.spongepowered.configurate.kotlin.objectMapperFactory
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.relativeTo
 
 
 class ModelLinkCollector(private val packPath: Path) : ModelLinkHolder {
 
-
     private fun toModelPath(key: Key): Path {
-        val keyPath = Paths.get("assets", key.namespace(), "models", key.value() + ".json")
-        return packPath.resolve(keyPath)
+        return Paths.get(key.namespace(), "models", key.value() + ".json")
+    }
+
+    private fun toModelKey(path: Path): Key {
+        return Key.key(
+            path.subpath(0, 1).toString(),
+            path.subpath(2, path.nameCount).toString().replace("\\", "/").replace(".json", "")
+        )
     }
 
     override fun collect(): List<ModelLink> {
@@ -28,57 +36,102 @@ class ModelLinkCollector(private val packPath: Path) : ModelLinkHolder {
         result.combine(collectLegacy()) { first, second ->
             first.key == second.key
         }
+        result.combine(collectOverlays()) { first, second ->
+            first.key == second.key
+        }
         return result
     }
 
-    private fun collectLegacy(type: ModelType): List<ModelLink> {
+    private fun collectOverlays(): List<ModelLink> {
+        val returned = mutableListOf<ModelLink>()
+        val metaPath = packPath.resolve("pack.mcmeta")
+        if (!metaPath.exists()) return returned
+        val meta = readModel<PackMeta>(metaPath) ?: return returned
+        meta.overlays.entries.forEach { overlay ->
+            if (overlay.formats == null || overlay.directory == null) return@forEach
+            val version = overlay.formats.start
+            val results: List<ModelLink> = if (version >= 46) {
+                collectModern(
+                    listOf(
+                        Paths.get("assets"),
+                        Paths.get(overlay.directory, "assets")
+                    )
+                )
+            } else {
+                collectLegacy(
+                    listOf(Paths.get("assets"), Paths.get(overlay.directory, "assets")),
+                    Path.of(overlay.directory, "assets", "minecraft", "models")
+                )
+            }
+            returned.addAll(results)
+        }
+        return returned
+    }
+
+    private fun collectLegacy(basePaths: List<Path>, modelPath: Path, type: ModelType): List<ModelLink> {
         val result = mutableListOf<ModelLink>()
-        val linkModels = packPath.resolve(Paths.get("assets", "minecraft", "models", type.name.lowercase()))
+        val linkModels = packPath.resolve(Paths.get(modelPath.toString(), type.name.lowercase()))
         if (!linkModels.exists()) return result
         linkModels.listDirectoryEntries("*.json").forEach { definition ->
             if (!definition.exists()) return@forEach
             try {
                 val parsed = readModel<LegacyResourcePackItemLink>(definition)
-                parsed?.overrides?.forEach overrideForEach@{ override ->
-                    if (!packPath.resolve(toModelPath(override.model)).exists()) return@overrideForEach
-                    result.add(ModelLink(override.model, parsed.parent, override.predicate, type))
+                parsed?.collect()?.map {
+                    ModelLink(
+                        it.key,
+                        toModelKey(definition.relativeTo(packPath.resolve(basePaths[0]))),
+                        predicates = it.predicates
+                    )
+                }?.let {
+                    result.addAll(it.filter { m ->
+                        basePaths.any { path -> packPath.resolve(path).resolve(toModelPath(m.key)).exists() }
+                    })
                 }
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
         return result
     }
 
-    private fun collectLegacy(): List<ModelLink> {
+    private fun collectLegacy(
+        basePath: List<Path> = listOf(Paths.get("assets")),
+        modelPath: Path = Paths.get("assets", "minecraft", "models")
+    ): List<ModelLink> {
         val result = mutableListOf<ModelLink>()
-        ModelType.entries.forEach { type -> result.addAll(collectLegacy(type)) }
+        ModelType.entries.forEach { type -> result.addAll(collectLegacy(basePath, modelPath, type)) }
         return result
     }
 
-    private fun collectModern(): List<ModelLink> {
+    private fun collectModern(basePaths: List<Path>, path: Path): List<ModelLink> {
         val result = mutableListOf<ModelLink>()
-        val namespaces = getNamespaces()
-        if (!namespaces.exists()) return result
-        namespaces.forEach { namespace ->
-            val items = namespace.resolve("items")
-            if (!items.exists()) return@forEach
-            items.listDirectoryEntries("*.json").forEach itemForEach@{ definition ->
-                if (!definition.exists()) return@itemForEach
-                try {
-                    val parsed = readModel<ModernResourcePackLink>(definition)
-                    if (parsed != null && parsed.model.type == Key.key("minecraft", "model")) {
-                        result.add(ModelLink(parsed.model.model))
-                    }
-
-                } catch (_: Exception) {
+        val items = path.resolve("items")
+        if (!items.exists()) return result
+        items.listDirectoryEntries("*.json").forEach itemForEach@{ definition ->
+            if (!definition.exists()) return@itemForEach
+            try {
+                val parsed = readModel<ModernResourcePackLink>(definition)
+                parsed?.collect()?.let {
+                    result.addAll(it.filter { m ->
+                        basePaths.any { path -> packPath.resolve(path).resolve(toModelPath(m.key)).exists() }
+                    })
                 }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
         return result
     }
 
-    private fun getNamespaces(): Path {
-        return packPath.resolve("assets")
+    private fun collectModern(basePaths: List<Path> = listOf(Paths.get("assets"))): List<ModelLink> {
+        val result = mutableListOf<ModelLink>()
+        basePaths.map { packPath.resolve(it) }.forEach {
+            if (!it.exists()) return@forEach
+            it.listDirectoryEntries().filter { it.isDirectory() }.forEach { namespace ->
+                result.addAll(collectModern(basePaths, namespace))
+            }
+        }
+        return result
     }
 
 
@@ -101,6 +154,8 @@ class ModelLinkCollector(private val packPath: Path) : ModelLinkHolder {
                 serializers.registerAnnotatedObjects(objectMapperFactory())
                 serializers.register(Enum::class.java, GenericEnumSerializer)
                 serializers.register(Key::class.java, KeySerializer)
+                serializers.register(Range::class.java, RangeSerializer)
+                serializers.register(object : TypeToken<Map<String, Any>>() {}, MapSerializer)
             }
         }.build()
         return loader.load().get<T>()

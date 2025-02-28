@@ -10,6 +10,6 @@ data class LegacyResourcePackItemLink(
     val parent: Key, val textures: Map<String, Key>, val overrides: List<ModelOverride>
 ) : ModelLinkHolder {
     override fun collect(): List<ModelLink> {
-        return overrides.map { ModelLink(it.model, parent, it.predicate) }
+        return overrides.map { ModelLink(it.model, predicates =  it.predicate) }
     }
 }

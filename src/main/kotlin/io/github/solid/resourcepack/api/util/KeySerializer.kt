@@ -10,10 +10,6 @@ object KeySerializer : TypeSerializer<Key> {
     override fun deserialize(type: Type, node: ConfigurationNode): Key {
         val value = node.string ?: throw SerializationException("No value present in node")
 
-        if (type !is Key) {
-            throw SerializationException("Type is not a key class")
-        }
-
         return try {
             Key.key(value)
         } catch (e: Exception) {

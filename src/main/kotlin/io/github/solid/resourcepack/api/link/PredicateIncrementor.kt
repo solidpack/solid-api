@@ -140,7 +140,7 @@ class PredicateGenerator(private val incrementor: PredicateIncrementor) {
         return realPredicates
     }
 
-    private fun List<Map<String, Any>>.contentEquals(other: Map<String, Any>): Boolean {
+    private fun List<Map<String, *>>.contentEquals(other: Map<String, Any>): Boolean {
         return this.any first@{
             val returned = it.keys.all second@{ key ->
                 return@second other[key].toString() == it[key].toString()
