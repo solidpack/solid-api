@@ -26,9 +26,9 @@ implementation 'io.github.solidpack:solid-api:VERSION'
 ## Contributing
 To contribute to this project
 1. Check if your feature is not already provided in a pull request or the project,
-2. if it is not, [fork](https://github.com/solid-resourcepack/solid-api/fork) the repository,
+2. if it is not, [fork](https://github.com/solidpack/solid-api/fork) the repository,
 3. commit changes into the fork,
-4. open a pull request with the [development branch](https://github.com/solid-resourcepack/solid-api/tree/development) as base
+4. open a pull request with the [development branch](https://github.com/solidpack/solid-api/tree/development) as base
 
 ## License
 This project is [licensed](LICENSE) under the Apache-2.0 license.
