@@ -103,38 +103,48 @@ class ModelLinkCollector(private val packPath: Path) : ModelLinkHolder {
         return result
     }
 
-    private fun collectModern(basePaths: List<Path>, path: Path): List<ModelLink> {
+    private fun collectModern(basePaths: List<Path> = listOf(Paths.get("assets"))): List<ModelLink> {
         val result = mutableListOf<ModelLink>()
-        val items = path.resolve("items")
-        if (!items.exists()) return result
-        items.listDirectoryEntries("*.json").forEach itemForEach@{ definition ->
-            if (!definition.exists()) return@itemForEach
-            try {
-                val parsed = readModel<ModernResourcePackLink>(definition)
-                parsed?.collect()?.let {
-                    result.addAll(it.filter { m ->
-                        basePaths.any { basePath ->
-                            packPath.resolve(basePath).resolve(toModelPath(m.key)).exists() && m.key.namespace() == path.last().toString()
-                        }
-                    })
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+        basePaths.map { packPath.resolve(it) }.forEach { baseDir ->
+            if (!baseDir.exists()) return@forEach
+            result.addAll(collectModernRecursively(basePaths, baseDir))
         }
         return result
     }
 
-    private fun collectModern(basePaths: List<Path> = listOf(Paths.get("assets"))): List<ModelLink> {
+    private fun collectModernRecursively(basePaths: List<Path>, currentDir: Path): List<ModelLink> {
         val result = mutableListOf<ModelLink>()
-        basePaths.map { packPath.resolve(it) }.forEach {
-            if (!it.exists()) return@forEach
-            it.listDirectoryEntries().filter { it.isDirectory() }.forEach { namespace ->
-                result.addAll(collectModern(basePaths, namespace))
+
+        val itemsDir = currentDir.resolve("items")
+        if (itemsDir.exists()) {
+            itemsDir.listDirectoryEntries("*.json").forEach itemForEach@{ definition ->
+                if (!definition.exists()) return@itemForEach
+                try {
+                    val parsed = readModel<ModernResourcePackLink>(definition)
+                    parsed?.collect()?.let {
+                        result.addAll(it.filter { m ->
+                            basePaths.any { basePath ->
+                                packPath.resolve(basePath).resolve(toModelPath(m.key)).exists() &&
+                                        m.key.namespace() == currentDir.last().toString()
+                            }
+                        })
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
         }
+
+        // Recurse into subdirectories
+        currentDir.listDirectoryEntries()
+            .filter { it.isDirectory() }
+            .forEach { subDir ->
+                result.addAll(collectModernRecursively(basePaths, subDir))
+            }
+
         return result
     }
+
 
 
     private fun MutableList<ModelLink>.combine(other: List<ModelLink>, check: (first: ModelLink, second: ModelLink) -> Boolean): List<ModelLink> {

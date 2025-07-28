@@ -8,8 +8,8 @@ plugins {
     `maven-publish`
 }
 
-group = "io.github.solid-resourcepack"
-version = "1.1.1"
+group = "io.github.solidpack"
+version = "1.1.2"
 
 repositories {
     mavenCentral()
@@ -56,9 +56,9 @@ centralPortal {
     password = project.findProperty("sonatypePassword") as? String
 
     pom {
-        name.set("Solid")
-        description.set("An API wrapper around unnamed/creative to make custom minecraft items/blocks with java edition resource packs easy for developers")
-        url.set("https://github.com/solid-resourcepack/solid")
+        name.set("Solid API")
+        description.set("A read only API to make working with custom minecraft items/blocks with java edition resource packs easy for developers")
+        url.set("https://github.com/solidpack/solid-api")
 
         developers {
             developer {
@@ -73,8 +73,8 @@ centralPortal {
             }
         }
         scm {
-            url.set("https://github.com/solid-resourcepack/solid")
-            connection.set("git:git@github.com:solid-resourcepack/solid.git")
+            url.set("https://github.com/solidpack/solid-api")
+            connection.set("git:git@github.com:solidpack/solid-api.git")
         }
     }
 }

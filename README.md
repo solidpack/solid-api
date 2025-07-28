@@ -1,4 +1,4 @@
-# solid-api ![Maven Central Version](https://img.shields.io/maven-central/v/io.github.solid-resourcepack/solid-api?style=flat) ![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/solid-resourcepack/solid-api)
+# solid-api ![Maven Central Version](https://img.shields.io/maven-central/v/io.github.solidpack/solid-api?style=flat) ![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/solidpack/solid-api)
 A (currently) read only API for minecraft resource packs.
 
 > Documentation is still work in progress
@@ -7,17 +7,17 @@ A (currently) read only API for minecraft resource packs.
 
 ### Gradle Kotlin
 ```kt
-implementation("io.github.solid-resourcepack:solid-api:VERSION")
+implementation("io.github.solidpack:solid-api:VERSION")
 ```
 ### Gradle Groovy
 ```groovy
-implementation 'io.github.solid-resourcepack:solid-api:VERSION'
+implementation 'io.github.solidpack:solid-api:VERSION'
 ```
 
 ### Maven
 ```xml
 <dependency>
-    <groupId>io.github.solid-resourcepack</groupId>
+    <groupId>io.github.solidpack</groupId>
     <artifactId>solid-api</artifactId>
     <version>VERSION</version>
 </dependency>
