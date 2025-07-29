@@ -9,7 +9,6 @@ import java.lang.reflect.Type
 object KeySerializer : TypeSerializer<Key> {
     override fun deserialize(type: Type, node: ConfigurationNode): Key {
         val value = node.string ?: throw SerializationException("No value present in node")
-
         return try {
             Key.key(value)
         } catch (e: Exception) {

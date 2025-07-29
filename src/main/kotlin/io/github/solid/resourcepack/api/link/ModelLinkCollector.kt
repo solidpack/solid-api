@@ -11,6 +11,7 @@ import org.spongepowered.configurate.kotlin.extensions.get
 import org.spongepowered.configurate.kotlin.objectMapperFactory
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
@@ -79,7 +80,7 @@ class ModelLinkCollector(private val packPath: Path) : ModelLinkHolder {
                 parsed?.collect()?.map {
                     ModelLink(
                         it.key,
-                        toModelKey(definition.relativeTo(packPath.resolve(basePaths[0]))),
+                        toModelKey(Path(definition.toString().split("/assets/")[1])),
                         predicates = it.predicates
                     )
                 }?.let {
@@ -107,47 +108,47 @@ class ModelLinkCollector(private val packPath: Path) : ModelLinkHolder {
         val result = mutableListOf<ModelLink>()
         basePaths.map { packPath.resolve(it) }.forEach { baseDir ->
             if (!baseDir.exists()) return@forEach
-            result.addAll(collectModernRecursively(basePaths, baseDir))
+            baseDir.listDirectoryEntries().forEach { dir ->
+                val itemsDir = dir.resolve("items")
+                if (!itemsDir.exists()) return@forEach
+                result.addAll(collectModernRecursively(basePaths, basePaths, itemsDir))
+            }
         }
         return result
     }
 
-    private fun collectModernRecursively(basePaths: List<Path>, currentDir: Path): List<ModelLink> {
+    private fun collectModernRecursively(realBasePaths: List<Path>, basePaths: List<Path>, currentDir: Path): List<ModelLink> {
         val result = mutableListOf<ModelLink>()
-
-        val itemsDir = currentDir.resolve("items")
-        if (itemsDir.exists()) {
-            itemsDir.listDirectoryEntries("*.json").forEach itemForEach@{ definition ->
-                if (!definition.exists()) return@itemForEach
-                try {
-                    val parsed = readModel<ModernResourcePackLink>(definition)
-                    parsed?.collect()?.let {
-                        result.addAll(it.filter { m ->
-                            basePaths.any { basePath ->
-                                packPath.resolve(basePath).resolve(toModelPath(m.key)).exists() &&
-                                        m.key.namespace() == currentDir.last().toString()
-                            }
-                        })
-                    }
-                } catch (e: Exception) {
-                    e.printStackTrace()
+        if (!currentDir.exists() || !currentDir.isDirectory()) return result
+        currentDir.listDirectoryEntries("*.json").forEach itemForEach@{ definition ->
+            if (!definition.exists()) return@itemForEach
+            try {
+                val parsed = readModel<ModernResourcePackLink>(definition)
+                parsed?.collect()?.let {
+                    result.addAll(it.filter { m ->
+                        realBasePaths.any { basePath ->
+                            packPath.resolve(basePath).resolve(toModelPath(m.key)).exists() &&
+                                    m.key.namespace() == currentDir.relativeTo(packPath.resolve(basePath)).first().toString()
+                        }
+                    })
                 }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
 
-        // Recurse into subdirectories
-        currentDir.listDirectoryEntries()
-            .filter { it.isDirectory() }
-            .forEach { subDir ->
-                result.addAll(collectModernRecursively(basePaths, subDir))
-            }
+        currentDir.listDirectoryEntries().filter { it.isDirectory() }.forEach { subDir ->
+            result.addAll(collectModernRecursively(realBasePaths, basePaths, subDir))
+        }
 
         return result
     }
 
 
-
-    private fun MutableList<ModelLink>.combine(other: List<ModelLink>, check: (first: ModelLink, second: ModelLink) -> Boolean): List<ModelLink> {
+    private fun MutableList<ModelLink>.combine(
+        other: List<ModelLink>,
+        check: (first: ModelLink, second: ModelLink) -> Boolean
+    ): List<ModelLink> {
         other.forEach { element ->
             val found = this.find { check(element, it) }?.let { this.indexOf(it) }
             if (found == null) {
